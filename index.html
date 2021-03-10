@@ -58,7 +58,27 @@
 
   var gui = create_gui();
 
-  function load_model(models){
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && video) {
+      var constraints = {audio: false, video: true};
+
+      navigator.mediaDevices.getUserMedia( constraints ).then( function ( stream ) {
+          video.playsInline = true;
+          video.srcObject = stream;
+          video.play();
+          videoLoaded = true;
+          ca.loadVideoTexture(video);
+
+      } ).catch( function ( error ) {
+          console.error( 'Unable to access the camera/webcam.', error );
+
+      } );
+
+  } else {
+      console.error( 'MediaDevices interface not available.' );
+  }
+
+
+  function load_model(models) {
       const ca = new CA(gl, models, [W, H], gui);
       window.ca = ca;
       ca.alignment = 0;
@@ -68,25 +88,6 @@
 
       ca.paint(128, 128, 1000, param.model);
 
-      if ( navigator.mediaDevices && navigator.mediaDevices.getUserMedia && video) {
-          var constraints = {audio: false, video: true};
-
-          navigator.mediaDevices.getUserMedia( constraints ).then( function ( stream ) {
-              video.playsInline = true;
-              video.srcObject = stream;
-              video.play();
-              videoLoaded = true;
-              ca.loadVideoTexture(video);
-
-          } ).catch( function ( error ) {
-              console.error( 'Unable to access the camera/webcam.', error );
-
-          } );
-
-      } else {
-          console.error( 'MediaDevices interface not available.' );
-      }
-      
 
       function canvasToGrid(x, y) {
         const [w, h] = ca.gridSize;
@@ -173,7 +174,6 @@
       }
 
       requestAnimationFrame(render);
-
 
       TweenLite.defaultEase = Power1.easeInOut;
       const TL = new TimelineMax({paused: true});
