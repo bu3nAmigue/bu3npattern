@@ -9,7 +9,6 @@
 <script type="module" src="ca.js"></script>
 
 <div>
-  <canvas id="overCanvas" width="1024" height="512" style="position: absolute;"></canvas>
   <canvas id="glCanvas" width="1024" height="512" style='z-index: 1'></canvas>
 </div>
 
@@ -26,9 +25,7 @@
   canvas.height = Math.round(canvas.clientHeight * devicePixelRatio);
   canvas.style.width = 1024 + "px";
   canvas.style.height = 512 + "px";
-  const overCanvas = document.querySelector('#overCanvas');
   const gl = canvas.getContext("webgl");
-  const ctx = overCanvas.getContext("2d");
   const W = 256, H = 256;
   var videoLoaded = false;
 
@@ -111,29 +108,6 @@
         }
       };
 
-      overCanvas.onmousedown = e => {
-        e.preventDefault();
-        if (e.buttons == 1) {
-          touch(getMousePos(e));
-        }
-      }
-      overCanvas.onmousemove = e => {
-        e.preventDefault();
-        if (e.buttons == 1) {
-          touch(getMousePos(e));
-        }
-      }
-      overCanvas.addEventListener("touchstart", e => {
-        e.preventDefault();
-        touch(getTouchPos(e.changedTouches[0]));
-      });
-      overCanvas.addEventListener("touchmove", e => {
-        e.preventDefault();
-        for (const t of e.touches) {
-          touch(getTouchPos(t));
-        }
-      });
-
       $( ".target" ).change(function() {
         alert( "Handler for .change() called." );
       });
@@ -163,11 +137,6 @@
           //ca.draw(param.zoom);
 
           const d = sz/param.zoom;
-          ctx.clearRect(0, 0, 2*sz, sz);
-          if (param.zoom > 1.0) {
-            ctx.strokeStyle = 'white';
-            ctx.strokeRect(sz/2-d/2, sz/2-d/2, d, d);
-          }
             
           requestAnimationFrame(render);
           ca.paint(128, 128, 1000, param.model);
