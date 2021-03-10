@@ -249,8 +249,9 @@ const PROGRAMS = {
     }`,
     update: `
     ${defInput('u_update')}
-    uniform float u_seed, u_updateProbability;
+    uniform float u_seed, u_updateProbability, u_interpolate;
     uniform sampler2D u_videotex;
+
 
     varying vec2 uv;
 
@@ -270,11 +271,13 @@ const PROGRAMS = {
       }else {
       #endif
       vec4 videoInfo = texture2D(u_videotex, xy/u_output.size);
-       float dif = 0.4*(videoInfo.g- 0.4)+0.3*(videoInfo.r- 0.3)+0.3*(videoInfo.b- 0.4);
-      if ( dif > 0.){
+
+
+      vec3 dif = videoInfo.rgb - vec3(u_interpolate);
+      if ( dif.r > 0.){
          setOutput((state + update));
       }else {
-setOutput(mix(state.rgba+update*0.5,state.gbba+update+5.*dif*videoInfo,0.4));
+setOutput(mix(state.rgba+update*0.5,state.gbba+update+5.*dif.r*videoInfo,0.4));
      }
 
 
@@ -467,6 +470,7 @@ export class CA {
         this.arrowsCoef = 0.0;
         this.visMode = 'color';
         this.hexGrid = 0.0;
+        this.interpolate = 0.0;
  
         this.layers = [];
         this.setWeights(models);
@@ -486,7 +490,8 @@ export class CA {
             gui.add(this, 'fuzz').min(0.0).max(128.0);
             gui.add(this, 'perceptionCircle').min(0.0).max(1.0);
             gui.add(this, 'visMode', visNames);
-            gui.add(this, 'hexGrid').min(0.0).max(1.0);;
+            gui.add(this, 'hexGrid').min(0.0).max(1.0);
+            gui.add(this, 'interpolate').min(0.0).max(1.0);
         }
 
         this.clearCircle(0, 0, 10000);
@@ -559,7 +564,9 @@ export class CA {
             this.runLayer(this.progs.update, this.buf.newState, {
                 u_input: this.buf.state, u_update: inputBuf,
                 u_unshuffleTex: this.unshuffleTex,
-                u_seed: Math.random() * 1000, u_updateProbability: this.updateProbability
+                u_seed: Math.random() * 1000,
+                u_updateProbability: this.updateProbability,
+                u_interpolate: this.interpolate
             });
         }
 
@@ -644,6 +651,7 @@ export class CA {
         uniforms['u_videotex'] = this.videoTex;
         uniforms['u_shuffleTex'] = this.shuffleTex;
         uniforms['u_shuffleOfs'] = this.shuffleOfs;
+
         setTensorUniforms(uniforms, 'u_output', output);
 
         twgl.bindFramebufferInfo(gl, output.fbi);
@@ -675,6 +683,7 @@ export class CA {
             u_arrows: this.arrowsCoef,
             u_hexGrid: this.hexGrid,
             u_videotex: this.videoTex,
+            u_interpolate: this.interpolate,
         };
         let inputBuf = this.buf.state;
         if (this.visMode != 'color') {
