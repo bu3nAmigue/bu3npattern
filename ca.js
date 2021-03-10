@@ -112,7 +112,7 @@ const PREFIX = `
 
     ${defInput('u_input')}
 
-    uniform float u_angle, u_alignment;
+    uniform float u_angle, u_alignment,u_zoom;
     uniform float u_hexGrid;
     
     mat2 rotate(float ang) {
@@ -130,6 +130,8 @@ const PREFIX = `
             dir = normalize(v1/pow(length(v1), 3.0) +  v2/pow(length(v2), 3.0));
         }
         dir = rotate(u_angle) * dir;
+        dir = (1. - u_zoom) * dir;
+        
         return dir;
     }
 `;
@@ -249,8 +251,9 @@ const PROGRAMS = {
     }`,
     update: `
     ${defInput('u_update')}
-    uniform float u_seed, u_updateProbability;
+    uniform float u_seed, u_updateProbability, u_interpolate;
     uniform sampler2D u_videotex;
+
 
     varying vec2 uv;
 
@@ -270,18 +273,19 @@ const PROGRAMS = {
       }else {
       #endif
       vec4 videoInfo = texture2D(u_videotex, xy/u_output.size);
-       float dif = 0.4*(videoInfo.g- 0.4)+0.3*(videoInfo.r- 0.3)+0.3*(videoInfo.b- 0.4);
-      if ( dif > 0.){
+
+
+      vec3 dif = videoInfo.rgb - vec3(u_interpolate);
+      if ( dif.r > 0.){
          setOutput((state + update));
       }else {
-setOutput(mix(state.rgba+update*0.5,state.gbba+update+5.*dif*videoInfo,0.4));
+setOutput(mix(state.rgba+update*0.5,state.gbba+update+5.*dif.r*videoInfo,0.4));
      }
 
 
     }`,
     vis: `
     uniform float u_raw;
-    uniform float u_zoom;
     uniform float u_perceptionCircle, u_arrows;
     varying vec2 uv;
 
@@ -343,7 +347,6 @@ setOutput(mix(state.rgba+update*0.5,state.gbba+update+5.*dif*videoInfo,0.4));
             gl_FragColor.a = 1.0;
         } else {
 
-            xy = (xy + vec2(0.5)*(u_zoom-1.0))/u_zoom;
             xy *= u_input.size;
             vec2 fp = 2.0*fract(xy)-1.0;
 
@@ -355,7 +358,7 @@ setOutput(mix(state.rgba+update*0.5,state.gbba+update+5.*dif*videoInfo,0.4));
 
             vec3 cellRGB = u_input_read(xy, 0.0).rgb/2.0+0.5;
             vec3 rgb = cellRGB;
-            if (3.0 < u_zoom) {
+            if (false) {
                 //vec2 fp = (mod(xy, 1.0)-vec2(0.5))*2.0;
                 vec2 dir = getCellDirection(floor(xy)+0.5);
                 float s = dir.x, c = dir.y;
@@ -364,7 +367,7 @@ setOutput(mix(state.rgba+update*0.5,state.gbba+update+5.*dif*videoInfo,0.4));
                 float fade = clip01((u_zoom-3.0)/3.0);
                 float m = 1.0-min(r*r*r, 1.0)*fade;
                 rgb *= m;
-                if (12.0 < u_zoom) {
+                if (false) {
                     float ang = atan(-fp.x, fp.y)/(2.0*PI)+0.5;
                     float ch = mod(ang*u_input.depth+1.5, u_input.depth);
                     float barLengh = 0.0;
@@ -467,6 +470,7 @@ export class CA {
         this.arrowsCoef = 0.0;
         this.visMode = 'color';
         this.hexGrid = 0.0;
+        this.interpolate = 0.0;
  
         this.layers = [];
         this.setWeights(models);
@@ -486,7 +490,8 @@ export class CA {
             gui.add(this, 'fuzz').min(0.0).max(128.0);
             gui.add(this, 'perceptionCircle').min(0.0).max(1.0);
             gui.add(this, 'visMode', visNames);
-            gui.add(this, 'hexGrid').min(0.0).max(1.0);;
+            gui.add(this, 'hexGrid').min(0.0).max(1.0);
+            gui.add(this, 'interpolate').min(0.0).max(1.0);
         }
 
         this.clearCircle(0, 0, 10000);
@@ -533,8 +538,11 @@ export class CA {
         }
     }
 
-    step(stage) {
+    step(stage, zoom) {
+        zoom = zoom || 0.
         stage = stage || 'all';
+
+       
         if (!this.layers.every(l=>l.ready)) 
             return;
     
@@ -546,7 +554,7 @@ export class CA {
         if (stage == 'all' || stage == 'perception') {
             this.runLayer(self.progs.perception, this.buf.perception, {
                 u_input: this.buf.state, u_angle: this.rotationAngle / 180.0 * Math.PI,
-                u_alignment: this.alignment, u_hexGrid: this.hexGrid
+                u_alignment: this.alignment, u_hexGrid: this.hexGrid, u_zoom: zoom
             });
         }
         let inputBuf = this.buf.perception;
@@ -559,7 +567,9 @@ export class CA {
             this.runLayer(this.progs.update, this.buf.newState, {
                 u_input: this.buf.state, u_update: inputBuf,
                 u_unshuffleTex: this.unshuffleTex,
-                u_seed: Math.random() * 1000, u_updateProbability: this.updateProbability
+                u_seed: Math.random() * 1000,
+                u_updateProbability: this.updateProbability,
+                u_interpolate: this.interpolate
             });
         }
 
@@ -644,6 +654,7 @@ export class CA {
         uniforms['u_videotex'] = this.videoTex;
         uniforms['u_shuffleTex'] = this.shuffleTex;
         uniforms['u_shuffleOfs'] = this.shuffleOfs;
+
         setTensorUniforms(uniforms, 'u_output', output);
 
         twgl.bindFramebufferInfo(gl, output.fbi);
@@ -668,13 +679,15 @@ export class CA {
 
         gl.useProgram(this.progs.vis.program);
         twgl.setBuffersAndAttributes(gl, this.progs.vis, this.quad);
-        const uniforms = { u_raw: 0.0, u_zoom: zoom,
+        const uniforms = { u_raw: 0.0,
+           u_zoom: zoom,
             u_angle: this.rotationAngle / 180.0 * Math.PI,
             u_alignment: this.alignment,
             u_perceptionCircle: this.perceptionCircle,
             u_arrows: this.arrowsCoef,
             u_hexGrid: this.hexGrid,
             u_videotex: this.videoTex,
+            u_interpolate: this.interpolate,
         };
         let inputBuf = this.buf.state;
         if (this.visMode != 'color') {

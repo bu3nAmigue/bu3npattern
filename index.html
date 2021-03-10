@@ -41,7 +41,7 @@
     active: true,
     model: 132,
     brushRadius: 16,
-    zoom: 16,
+    zoom: 0.,
     stepPerFrame: 1,
     paintMode: false,
   };
@@ -50,7 +50,7 @@
     var gui = new dat.GUI();
     gui.add(param, 'active');
     gui.add(param, 'brushRadius', 1, 40);
-    gui.add(param, 'zoom', 1.0, 64.0);
+    gui.add(param, 'zoom', -0.5, .5).step(0.0001);
     gui.add(param, 'stepPerFrame', 0, 6);
     gui.add(param, 'paintMode', 0, 6);
     return gui;
@@ -148,9 +148,10 @@
               ca.updateVideoTex(video);
           }
           if (param.active) {
+
             const t = 2.0 * Date.now() / 1000.0;
             //ca.clearCircle(Math.sin(t * 2.0) * W / 3 + W / 2, Math.cos(t * 3.1) * H / 3 + H / 2, 20);
-            for (let i=0; i<param.stepPerFrame; ++i) ca.step();
+            for (let i=0; i<param.stepPerFrame; ++i) ca.step('all', param.zoom);
           }
           twgl.bindFramebufferInfo(gl);
           const sz = 512;
@@ -169,7 +170,6 @@
             
           requestAnimationFrame(render);
           ca.paint(128, 128, 1000, param.model);
-
       }
 
       requestAnimationFrame(render);
