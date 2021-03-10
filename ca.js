@@ -266,14 +266,15 @@ const PROGRAMS = {
       #else
         if (hash13(vec3(xy, u_seed)) <= u_updateProbability) {
             update = u_update_readUV(uv);    
-        }
+        });
+      }else {
       #endif
       vec4 videoInfo = texture2D(u_videotex, xy/u_output.size);
-
-      if (videoInfo.r >0.3 && videoInfo.r <0.8){
+       float dif = 0.4*(videoInfo.g- 0.4)+0.3*(videoInfo.r- 0.3)+0.3*(videoInfo.b- 0.4);
+      if ( dif > 0.){
          setOutput((state + update));
       }else {
-setOutput(state+update + 0.5*videoInfo);
+setOutput(mix(state.rgba+update*0.5,state.gbba+update+5.*dif*videoInfo,0.4));
      }
 
 
