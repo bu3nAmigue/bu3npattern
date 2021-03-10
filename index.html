@@ -37,7 +37,6 @@
   const param = {
     active: true,
     model: 132,
-    brushRadius: 16,
     zoom: 0.,
     stepPerFrame: 1,
     paintMode: false,
@@ -46,7 +45,6 @@
   function create_gui(){
     var gui = new dat.GUI();
     gui.add(param, 'active');
-    gui.add(param, 'brushRadius', 1, 40);
     gui.add(param, 'zoom', -0.5, .5).step(0.0001);
     gui.add(param, 'stepPerFrame', 0, 6);
     gui.add(param, 'paintMode', 0, 6);
@@ -92,21 +90,6 @@
         const gridY = y / canvas.clientHeight * h;
         return [gridX, gridY];
       }
-      function getMousePos(e) {
-        return canvasToGrid(e.offsetX, e.offsetY);
-      }
-      function getTouchPos(touch) {
-        const rect = canvas.getBoundingClientRect();
-        return canvasToGrid(touch.clientX - rect.left, touch.clientY - rect.top);
-      }
-      function touch(pos) {
-        const [x, y] = pos;
-        if ( param.paintMode ) {
-          ca.paint(x, y, param.brushRadius, param.model);
-        } else {
-          ca.clearCircle(x, y, param.brushRadius);
-        }
-      };
 
       $( ".target" ).change(function() {
         alert( "Handler for .change() called." );
