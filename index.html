@@ -19,18 +19,31 @@
 <script type="module">
   import { CA } from "./ca.js"
 
+ 
+
   const canvas = document.querySelector('#glCanvas');
   const devicePixelRatio = window.devicePixelRatio || 1;
- // canvas.width = Math.round(window.innerWidth * devicePixelRatio);
- // canvas.height = Math.round(window.innerHeight * devicePixelRatio);
-
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
+  const quality = .5;
   const gl = canvas.getContext("webgl");
   const W = 256, H = 256;
   var videoLoaded = false;
   let ca;
+
+  resizeGLCanvas(window.innerWidth, window.innerHeight);
+
+  function resizeGLCanvas(width, height) {
+      canvas.width = width / quality;
+      canvas.height = height / quality;
+
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+
+      gl.viewport(0, 0, canvas.width, canvas.height);
+
+  }
+
+
+ 
 
   const video = document.createElement('video');
   video.autoplay="";
@@ -118,14 +131,11 @@
             for (let i=0; i<param.stepPerFrame; ++i) ca.step('all', param.zoom);
           }
           twgl.bindFramebufferInfo(gl);
-          const sz = canvas.width;
-          const gz = canvas.height;
-          gl.viewport(0, 0, sz, gz);
+          
+          gl.viewport(0, 0, canvas.width, canvas.height);
           ca.draw();
-          //ca.draw(param.zoom);
-
-          const d = sz/param.zoom;
-            
+          
+       
           requestAnimationFrame(render);
           ca.paint(128, 128, 1000, param.model);
       }
