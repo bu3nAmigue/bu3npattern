@@ -28,6 +28,7 @@
   const gl = canvas.getContext("webgl");
   const W = 256, H = 256;
   var videoLoaded = false;
+  let ca;
 
   const video = document.createElement('video');
   video.autoplay="";
@@ -72,9 +73,12 @@
       console.error( 'MediaDevices interface not available.' );
   }
 
+  function update_model(models){
+      ca.setWeights(models);
+  }
 
   function load_model(models) {
-      const ca = new CA(gl, models, [W, H], gui);
+      ca = new CA(gl, models, [W, H], gui);
       window.ca = ca;
       ca.alignment = 0;
       
@@ -169,10 +173,8 @@
           return function(e) {
             var models = e.target.result;
             var json_models = JSON.parse(models);
-            console.log(json_models);
-            gui.destroy();
-            gui = create_gui();
-            load_model(json_models);
+         
+            update_model(json_models);
           };
       })(f);
 

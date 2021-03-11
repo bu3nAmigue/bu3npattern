@@ -635,7 +635,10 @@ export class CA {
 
     setWeights(models) {
         const gl = this.gl;
-        this.layers.forEach(layer=>gl.deleteTexture(layer));
+        console.log(this.layers);
+
+        // this.layers.forEach(layer=>{console.log(layer);gl.deleteTexture(layer)});
+        this.layers = null;
         this.layers = models.layers.map(layer=>createDenseInfo(gl, layer));
     }
 
