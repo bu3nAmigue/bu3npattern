@@ -206,7 +206,7 @@ const PROGRAMS = {
     dense: `
     ${defInput('u_control')}
     uniform sampler2D u_weightTex;
-    uniform float u_seed, u_fuzz;
+    uniform float u_seed;
     uniform vec2 u_weightCoefs; // scale, center
     uniform vec2 u_layout;
 
@@ -225,13 +225,12 @@ const PROGRAMS = {
 
       float dy = 1.0/(u_input.depth+1.0)/u_layout.y;
       vec2 p = vec2((ch+0.5)/u_output.depth4, dy*0.5);
-      vec2 fuzz = (hash23(vec3(xy, u_seed+ch))-0.5)*u_fuzz;
 
       vec2 realXY = xy;
       #ifdef SPARSE_UPDATE
         realXY = texture2D(u_shuffleTex, xy/u_output.size).xy*255.0+0.5 + u_shuffleOfs;
       #endif
-      float modelIdx = u_control_read(realXY+fuzz, 0.0).x+0.5;
+      float modelIdx = u_control_read(realXY, 0.0).x+0.5;
       p.x += floor(mod(modelIdx, u_layout.x));
       p.y += floor(modelIdx/u_layout.x);
       p /= u_layout;
@@ -289,39 +288,8 @@ setOutput(mix(state.rgba+update*0.5,state.gbba+update+5.*dif.r*videoInfo,0.4));
     uniform float u_perceptionCircle, u_arrows;
     varying vec2 uv;
 
-    float clip01(float x) {
-        return min(max(x, 0.0), 1.0);
-    }
-
     const float PI = 3.141592653;
 
-    float peak(float x, float r) {
-        float y = x/r;
-        return exp(-y*y);
-    }
-
-    float getElement(vec4 v, float i) {
-        if (i<1.0) return v.x;
-        if (i<2.0) return v.y;
-        if (i<3.0) return v.z;
-        return v.w;
-    }
-
-    vec3 onehot3(float i) {
-        if (i<1.0) return vec3(1.0, 0.0, 0.0);
-        if (i<2.0) return vec3(0.0, 1.0, 0.0);
-        return vec3(0.0, 0.0, 1.0);
-    }
-
-    float sdTriangleIsosceles( in vec2 p, in vec2 q ) {
-        p.x = abs(p.x);
-        vec2 a = p - q*clamp( dot(p,q)/dot(q,q), 0.0, 1.0 );
-        vec2 b = p - q*vec2( clamp( p.x/q.x, 0.0, 1.0 ), 1.0 );
-        float s = -sign( q.y );
-        vec2 d = min( vec2( dot(a,a), s*(p.x*q.y-p.y*q.x) ),
-                      vec2( dot(b,b), s*(p.y-q.y)  ));
-        return -sqrt(d.x)*sign(d.y);
-    }
 
     // https://www.shadertoy.com/view/Xljczw
     // https://www.shadertoy.com/view/MlXyDl
@@ -342,64 +310,20 @@ setOutput(mix(state.rgba+update*0.5,state.gbba+update+5.*dif.r*videoInfo,0.4));
 
     void main() {
         vec2 xy = vec2(uv.x, 1.0-uv.y);
-        if (u_raw > 0.5) {
-            gl_FragColor = texture2D(u_input_tex, xy);
-            gl_FragColor.a = 1.0;
-        } else {
 
-            xy *= u_input.size;
-            vec2 fp = 2.0*fract(xy)-1.0;
+       xy *= u_input.size;
+       vec2 fp = 2.0*fract(xy)-1.0;
 
-            if (true) { //u_hexGrid > 0.0) {
-                vec4 r = getHex(xy-u_input.size*0.5);
-                xy = r.zw+u_input.size*0.5;
-                fp = r.xy;
-            }
 
-            vec3 cellRGB = u_input_read(xy, 0.0).rgb/2.0+0.5;
-            vec3 rgb = cellRGB;
-            if (false) {
-                //vec2 fp = (mod(xy, 1.0)-vec2(0.5))*2.0;
-                vec2 dir = getCellDirection(floor(xy)+0.5);
-                float s = dir.x, c = dir.y;
-                fp = mat2(c, s, -s, c) * fp;    
-                float r = length(fp);
-                float fade = clip01((u_zoom-3.0)/3.0);
-                float m = 1.0-min(r*r*r, 1.0)*fade;
-                rgb *= m;
-                if (false) {
-                    float ang = atan(-fp.x, fp.y)/(2.0*PI)+0.5;
-                    float ch = mod(ang*u_input.depth+1.5, u_input.depth);
-                    float barLengh = 0.0;
-                    vec3 barColor = vec3(0.5);
-                    if (ch < 3.0) {
-                        vec3 i3 = onehot3(ch);
-                        barColor = i3;
-                        barLengh = dot(cellRGB, i3);
-                    } else {
-                        vec4 v4 = u_input_read01(xy, floor(ch/4.0));
-                        barLengh = getElement(v4, mod(ch, 4.0));
-                    }
+       vec4 r = getHex(xy-u_input.size*0.5);
+       xy = r.zw+u_input.size*0.5;
+       fp = r.xy;
+       vec3 cellRGB = u_input_read(xy, 0.0).rgb/2.0+0.5;
+       vec3 rgb = cellRGB;
 
-                    float c = mod(ch, 1.0);
-                    c = peak(c-0.5, 0.2);
-                    if (r>barLengh)
-                      c = 0.0;
-                    float fade = clip01((u_zoom-12.0)/8.0);
-                    c *= fade;
-                    rgb += barColor*c;
 
-                    float arrow = sdTriangleIsosceles((fp+vec2(0.0, 0.95))*vec2(4.0, 4.0), vec2(1.0, 1.0));
-                    arrow = clip01(1.0-abs(arrow)*u_zoom/4.0);
-                    rgb += arrow*fade*u_arrows;
+      gl_FragColor = vec4(rgb, 1.0);
 
-                    float cr = length(u_input.size/2.0-0.5-xy);
-                    rgb += peak(cr-1.5, 0.5/u_zoom)*fade*u_perceptionCircle;
-                }
-            } 
-
-            gl_FragColor = vec4(rgb, 1.0);
-        }
     }`
 }
 
@@ -465,7 +389,6 @@ export class CA {
 
         this.rotationAngle = 0.0;
         this.alignment = 1;
-        this.fuzz = 8.0;
         this.perceptionCircle = 0.0;
         this.arrowsCoef = 0.0;
         this.visMode = 'color';
@@ -487,9 +410,7 @@ export class CA {
         if (gui) {
             gui.add(this, 'rotationAngle').min(0.0).max(360.0);
             gui.add(this, 'alignment', { cartesian: 0, polar: 1, bipolar: 2 }).listen();
-            gui.add(this, 'fuzz').min(0.0).max(128.0);
-            gui.add(this, 'perceptionCircle').min(0.0).max(1.0);
-            gui.add(this, 'visMode', visNames);
+
             gui.add(this, 'hexGrid').min(0.0).max(1.0);
             gui.add(this, 'interpolate').min(0.0).max(1.0);
         }
@@ -578,49 +499,6 @@ export class CA {
         }
     }
 
-    benchmark() {
-        const gl = this.gl;
-        const flushBuf = new Uint8Array(4);
-        const flush = buf=>{
-            buf = buf || this.buf.state;
-            // gl.flush/finish don't seem to do anything, so reading a single 
-            // pixel from the state buffer to flush the GPU command pipeline
-            twgl.bindFramebufferInfo(gl, buf.fbi);
-            gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, flushBuf);
-        }
-
-        flush();
-        const stepN = 100;
-        const start = Date.now();
-        for (let i = 0; i < stepN; ++i)
-            this.step();
-        flush();
-        const total = (Date.now() - start) / stepN;
-
-        const ops = ['perception'];
-        for (let i=0; i<this.layers.length; ++i)
-            ops.push(`layer${i}`);
-        ops.push('newState');
-        let perOpTotal = 0.0;
-        const perOp = [];
-        for (const op of ops) {
-            const start = Date.now();
-            for (let i = 0; i < stepN; ++i) {
-                this.step(op);
-            }
-            flush(this.buf[op]);
-            const dt = (Date.now() - start) / stepN;
-            perOpTotal += dt
-            perOp.push([op, dt]);
-        }
-        const perOpStr = perOp.map((p) => {
-            const [programName, dt] = p;
-            const percent = 100.0 * dt / perOpTotal;
-            return `${programName}: ${percent.toFixed(1)}%`;
-        }).join(', ');
-        return `${(total).toFixed(2)} ms/step, ${(1000.0 / total).toFixed(2)} step/sec\n` + perOpStr + '\n\n';
-    }
-
     paint(x, y, r, brush) {
         this.runLayer(this.progs.paint, this.buf.control, {
             u_pos: [x, y], u_r: r, u_brush: [brush, 0, 0, 0],
@@ -672,7 +550,7 @@ export class CA {
         return this.runLayer(this.progs.dense, output, {
             u_input: input, u_control: this.buf.control,
             u_weightTex: layer.tex, u_weightCoefs: layer.coefs, u_layout: layer.layout,
-            u_seed: Math.random() * 1000, u_fuzz: this.fuzz
+            u_seed: Math.random() * 1000,
         });
     }
 

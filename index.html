@@ -8,11 +8,7 @@
 <script type="text/javascript"
         src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 <script type="module" src="ca.js"></script>
-
-<div>
-  <canvas id="glCanvas"  style='z-index: 1'></canvas>
-</div>
-
+<canvas id="glCanvas"  style='z-index: 1'></canvas>
 <form enctype="multipart/form-data">
 <input id="upload" type=file   accept="text/json" size=30>
 </form>
@@ -64,7 +60,6 @@
     gui.add(param, 'active');
     gui.add(param, 'zoom', -0.5, .5).step(0.0001);
     gui.add(param, 'stepPerFrame', 0, 6);
-    gui.add(param, 'paintMode', 0, 6);
     return gui;
   }
 
@@ -115,12 +110,7 @@
         alert( "Handler for .change() called." );
       });
 
-      param.benchmark = ()=>{
-        document.getElementById('log').insertAdjacentHTML('afterbegin', ca.benchmark());
-      }
-
-      gui.add(param, 'benchmark');
-
+    
       function render() {
           if (videoLoaded){
               ca.updateVideoTex(video);
