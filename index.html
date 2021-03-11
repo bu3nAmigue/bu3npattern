@@ -9,7 +9,7 @@
 <script type="module" src="ca.js"></script>
 
 <div>
-  <canvas id="glCanvas" width="1024" height="512" style='z-index: 1'></canvas>
+  <canvas id="glCanvas"  style='z-index: 1'></canvas>
 </div>
 
 <form enctype="multipart/form-data">
@@ -21,10 +21,12 @@
 
   const canvas = document.querySelector('#glCanvas');
   const devicePixelRatio = window.devicePixelRatio || 1;
-  canvas.width = Math.round(canvas.clientWidth * devicePixelRatio);
-  canvas.height = Math.round(canvas.clientHeight * devicePixelRatio);
-  canvas.style.width = 1024 + "px";
-  canvas.style.height = 512 + "px";
+ // canvas.width = Math.round(window.innerWidth * devicePixelRatio);
+ // canvas.height = Math.round(window.innerHeight * devicePixelRatio);
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
   const gl = canvas.getContext("webgl");
   const W = 256, H = 256;
   var videoLoaded = false;
@@ -116,11 +118,10 @@
             for (let i=0; i<param.stepPerFrame; ++i) ca.step('all', param.zoom);
           }
           twgl.bindFramebufferInfo(gl);
-          const sz = 512;
-          const gz = 512*devicePixelRatio;
-          gl.viewport(0, 0, gz, gz);
+          const sz = canvas.width;
+          const gz = canvas.height;
+          gl.viewport(0, 0, sz, gz);
           ca.draw();
-          gl.viewport(gz, 0, gz, gz);
           //ca.draw(param.zoom);
 
           const d = sz/param.zoom;
@@ -151,9 +152,6 @@
       TL.set(ca, {alignment: 2.0}, '+=0.1');
       //TL.addPause();
       TL.to(ca, 1.0, {rotationAngle: 0.0});
-        if (videoLoaded) {
-           
-        }
 
       //TL.seek('x');
   }
