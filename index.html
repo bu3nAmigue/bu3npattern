@@ -1,6 +1,33 @@
 <!doctype html>
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Title -->
+
+<title>bu3nPattern</title>
+<meta property="og:title" content="bu3nPattern">
+
+<!--Favicon-->
+<link rel="icon" href="https://mathigatti.com/favicon/favicon.png">
+
+<!--Preview Images-->
+
+<meta property="og:image" content="https://bu3namigue.github.io/bu3npattern/demo.gif">
+<link rel="image_src" href="/demo.gif">
+
+<!--Description-->
+
+<meta name="description" content="Apply real time pattern effects to your webcam online">
+<meta property="og:description" content="Apply real time pattern effects to your webcam online">
+
+<!--Author-->
+
+<meta name="author" content="bu3nAmigue">
+<meta name="twitter:card" content="summary_large_image">
+        
+        
+
 <script src="https://cdn.jsdelivr.net/npm/twgl.js@4.15.0/dist/4.x/twgl-full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.7/build/dat.gui.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.3.4/gsap.min.js"></script>
@@ -8,6 +35,9 @@
 <script type="text/javascript"
         src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 <script type="module" src="ca.js"></script>
+</head>
+<body>
+
 <canvas id="glCanvas"  style='z-index: 1'></canvas>
 <form enctype="multipart/form-data">
   <p>Upload your models JSON file</p>
@@ -156,3 +186,4 @@
   document.getElementById('upload').addEventListener('change', handleFileSelect, false);
 
 </script>
+</body>
