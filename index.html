@@ -10,13 +10,12 @@
 <script type="module" src="ca.js"></script>
 <canvas id="glCanvas"  style='z-index: 1'></canvas>
 <form enctype="multipart/form-data">
-<input id="upload" type=file   accept="text/json" size=30>
+  <input id="Load new models" type=file   accept="text/json" size=60>
+  <p>Generate your own pattern from custom images from <a href="https://colab.research.google.com/drive/1KMlVFi2zXhE0_PHCBXC07oblcJf9E13s">here</a></p>
 </form>
 
 <script type="module">
   import { CA } from "./ca.js"
-
- 
 
   const canvas = document.querySelector('#glCanvas');
   const devicePixelRatio = window.devicePixelRatio || 1;
@@ -51,7 +50,7 @@
     active: true,
     model: 132,
     zoom: 0.,
-    stepPerFrame: 1,
+    speed: 1,
     paintMode: false,
   };
 
@@ -59,11 +58,12 @@
     var gui = new dat.GUI();
     gui.add(param, 'active');
     gui.add(param, 'zoom', -0.5, .5).step(0.0001);
-    gui.add(param, 'stepPerFrame', 0, 6);
+    gui.add(param, 'speed', 0, 6);
     return gui;
   }
 
   var gui = create_gui();
+  let name2idx, modelController;
 
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && video) {
       var constraints = {audio: false, video: true};
@@ -86,6 +86,10 @@
 
   function update_model(models){
       ca.setWeights(models);
+      name2idx = Object.fromEntries(models.model_names.map((s, i) => [s, i]));
+      gui.remove(modelController);
+      modelController = gui.add(param, 'model').options(name2idx).listen();
+      param.model=0;
   }
 
   function load_model(models) {
@@ -93,18 +97,11 @@
       window.ca = ca;
       ca.alignment = 0;
       
-      const name2idx = Object.fromEntries(models.model_names.map((s, i) => [s, i]));
-      gui.add(param, 'model').options(name2idx).listen();
+      name2idx = Object.fromEntries(models.model_names.map((s, i) => [s, i]));
+      modelController = gui.add(param, 'model').options(name2idx).listen();
 
       ca.paint(128, 128, 1000, param.model);
 
-
-      function canvasToGrid(x, y) {
-        const [w, h] = ca.gridSize;
-        const gridX = x / canvas.clientWidth * w * 2.0;
-        const gridY = y / canvas.clientHeight * h;
-        return [gridX, gridY];
-      }
 
       $( ".target" ).change(function() {
         alert( "Handler for .change() called." );
@@ -115,46 +112,21 @@
           if (videoLoaded){
               ca.updateVideoTex(video);
           }
-          if (param.active) {
 
-            const t = 2.0 * Date.now() / 1000.0;
+          if (param.active) {
             //ca.clearCircle(Math.sin(t * 2.0) * W / 3 + W / 2, Math.cos(t * 3.1) * H / 3 + H / 2, 20);
-            for (let i=0; i<param.stepPerFrame; ++i) ca.step('all', param.zoom);
+            for (let i=0; i<param.speed; ++i) ca.step('all', param.zoom);
           }
+
           twgl.bindFramebufferInfo(gl);
-          
           gl.viewport(0, 0, canvas.width, canvas.height);
           ca.draw();
-          
        
           requestAnimationFrame(render);
           ca.paint(128, 128, 1000, param.model);
       }
 
       requestAnimationFrame(render);
-
-      TweenLite.defaultEase = Power1.easeInOut;
-      const TL = new TimelineMax({paused: true});
-
-      TL.to(param, 4.0, {zoom: 40.0, ease: ExpoScaleEase.config(1.0, 40.0)});
-      //TL.addPause();
-
-      TL.to(ca, 1.0, {perceptionCircle: 1.0});
-      //TL.addPause();
-      TL.add('x');
-      TL.to(ca, 1.0, {perceptionCircle: 0.0});
-      TL.to(ca, 1.0, {arrowsCoef: 1.0}, '-=1');
-      //TL.addPause();
-
-      TL.to(ca, 1.0, {rotationAngle: 60.0});
-      //TL.addPause();
-      TL.set(ca, {alignment: 1.0}, '+=0.1');
-      //TL.addPause();
-      TL.set(ca, {alignment: 2.0}, '+=0.1');
-      //TL.addPause();
-      TL.to(ca, 1.0, {rotationAngle: 0.0});
-
-      //TL.seek('x');
   }
 
 

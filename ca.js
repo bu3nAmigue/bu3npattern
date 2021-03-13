@@ -250,7 +250,7 @@ const PROGRAMS = {
     }`,
     update: `
     ${defInput('u_update')}
-    uniform float u_seed, u_updateProbability, u_interpolate;
+    uniform float u_seed, u_updateProbability, u_cameraMix;
     uniform sampler2D u_videotex;
 
 
@@ -274,7 +274,7 @@ const PROGRAMS = {
       vec4 videoInfo = texture2D(u_videotex, xy/u_output.size);
 
 
-      vec3 dif = videoInfo.rgb - vec3(u_interpolate);
+      vec3 dif = videoInfo.rgb - vec3(u_cameraMix);
       if ( dif.r > 0.){
          setOutput((state + update));
       }else {
@@ -393,7 +393,7 @@ export class CA {
         this.arrowsCoef = 0.0;
         this.visMode = 'color';
         this.hexGrid = 0.0;
-        this.interpolate = 0.0;
+        this.cameraMix = 0.5;
  
         this.layers = [];
         this.setWeights(models);
@@ -412,7 +412,7 @@ export class CA {
             gui.add(this, 'alignment', { cartesian: 0, polar: 1, bipolar: 2 }).listen();
 
             gui.add(this, 'hexGrid').min(0.0).max(1.0);
-            gui.add(this, 'interpolate').min(0.0).max(1.0);
+        gui.add(this, 'cameraMix').min(0.0).max(1.0).step(0.01);
         }
 
         this.clearCircle(0, 0, 10000);
@@ -490,7 +490,7 @@ export class CA {
                 u_unshuffleTex: this.unshuffleTex,
                 u_seed: Math.random() * 1000,
                 u_updateProbability: this.updateProbability,
-                u_interpolate: this.interpolate
+                u_cameraMix: this.cameraMix
             });
         }
 
@@ -568,7 +568,7 @@ export class CA {
             u_arrows: this.arrowsCoef,
             u_hexGrid: this.hexGrid,
             u_videotex: this.videoTex,
-            u_interpolate: this.interpolate,
+            u_cameraMix: this.cameraMix,
         };
         let inputBuf = this.buf.state;
         if (this.visMode != 'color') {
