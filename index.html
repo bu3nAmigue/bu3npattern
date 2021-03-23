@@ -24,9 +24,7 @@
 <!--Author-->
 
 <meta name="author" content="bu3nAmigue">
-<meta name="twitter:card" content="summary_large_image">
-        
-        
+
 
 <script src="https://cdn.jsdelivr.net/npm/twgl.js@4.15.0/dist/4.x/twgl-full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.7/build/dat.gui.min.js"></script>
@@ -35,23 +33,57 @@
 <script type="text/javascript"
         src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 <script type="module" src="ca.js"></script>
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+    integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+<link href="/styles.css" rel="stylesheet">
 </head>
 <body>
+   <a id="screenshot" class="info">
+     <span class="fab fas fa-camera-retro fa-2x"></span>
+      <span class="text">Take screenshot</span>
+   </a>
+
+  <a id="btn" class="info">
+    <span class="fab fas fa-plus-circle "></span>
+    <span class="text">Add new pattern</span>
+  </a>
+
+  <div id="showInfo" class="modal">
+    <div class="modal-header">
+      <p>bu3n pattern</p>
+      <span class="close">&times;
+      </span>
+    </div>
+    <div class="modal-content">
+      <form enctype="multipart/form-data">
+        <p>Create your own effect by adding a customized pattern.</p>
+        <p>Generate a personalized model from images using <a href="https://colab.research.google.com/drive/1KMlVFi2zXhE0_PHCBXC07oblcJf9E13s" target="_blank">this colab</a></p>
+        <p>After you download the models JSON file</p>
+        <p>Load it and try it! </p>
+        <input class="button" id="upload" type="file"   accept="text/json" value="Upload JSON here!" size="60"/>
+        <label for="upload">Upload file</label>
+
+</form>
+    </div>
+  </div>
+  </div>
+  <a href="https://github.com/bu3nAmigue/bu3npattern" class="info"
+    title="View source on Github">
+    <span class="fab fa-github"></span>
+    <span class="text">View source</span>
+  </a>
 
 <canvas id="glCanvas"  style='z-index: 1'></canvas>
-<form enctype="multipart/form-data">
-  <p>Upload your models JSON file</p>
-  <input id="upload" type=file   accept="text/json" size=60>
-  <p>Generate your own pattern from custom images from <a href="https://colab.research.google.com/drive/1KMlVFi2zXhE0_PHCBXC07oblcJf9E13s" target="_blank">here</a></p>
-</form>
-
+<script src="/helper.js"></script>
+<script src="/canvas2blob.js"></script>
+<script src="/FileSaver.js"></script>
 <script type="module">
   import { CA } from "./ca.js"
 
   const canvas = document.querySelector('#glCanvas');
   const devicePixelRatio = window.devicePixelRatio || 1;
   const quality = .5;
-  const gl = canvas.getContext("webgl");
+  const gl  =  canvas.getContext("webgl", {preserveDrawingBuffer: true});
   const W = 256, H = 256;
   var videoLoaded = false;
   let ca;
@@ -138,8 +170,8 @@
         alert( "Handler for .change() called." );
       });
 
-    
       function render() {
+
           if (videoLoaded){
               ca.updateVideoTex(video);
           }
@@ -149,17 +181,34 @@
             for (let i=0; i<param.speed; ++i) ca.step('all', param.zoom);
           }
 
-          twgl.bindFramebufferInfo(gl);
-          gl.viewport(0, 0, canvas.width, canvas.height);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+          gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
           ca.draw();
-       
-          requestAnimationFrame(render);
+
           ca.paint(128, 128, 1000, param.model);
+          requestAnimationFrame(render);
+          
       }
 
-      requestAnimationFrame(render);
+         requestAnimationFrame(render);
+         
   }
 
+  var screenshot =  document.getElementById("screenshot");
+  screenshot.onclick = function(event){
+      var aCanvas = document.getElementById("glCanvas"),
+          ctx =  aCanvas.getContext("webgl2", {preserveDrawingBuffer: true});
+;
+      aCanvas.toBlob( function(blob)
+                      {
+                          var d = new Date();
+                          var fName = d.getFullYear()+"_"+d.getMonth()+"_"+d.getDate()+"_"+
+                              d.getHours()+"_"+d.getMinutes()+"_"+d.getSeconds();
+
+                          saveAs(blob, "bu3npattern"+fName+".png");
+                      });
+
+  };
 
   fetch('data/models.json').then(r => r.json()).then(models => {
       console.log(models);
