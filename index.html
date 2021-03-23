@@ -83,7 +83,7 @@
   const canvas = document.querySelector('#glCanvas');
   const devicePixelRatio = window.devicePixelRatio || 1;
   const quality = .5;
-  const gl = canvas.getContext("webgl");
+  const gl  =  canvas.getContext("webgl", {preserveDrawingBuffer: true});
   const W = 256, H = 256;
   var videoLoaded = false;
   let ca;
@@ -170,9 +170,8 @@
         alert( "Handler for .change() called." );
       });
 
-      window.screenshotshot = false;
       function render() {
-          if (!screenshotshot){
+
           if (videoLoaded){
               ca.updateVideoTex(video);
           }
@@ -182,42 +181,32 @@
             for (let i=0; i<param.speed; ++i) ca.step('all', param.zoom);
           }
 
-          twgl.bindFramebufferInfo(gl);
-          gl.viewport(0, 0, canvas.width, canvas.height);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+          gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
           ca.draw();
-       
-          requestAnimationFrame(render);
+
           ca.paint(128, 128, 1000, param.model);
+          requestAnimationFrame(render);
+          
       }
-      }
+
          requestAnimationFrame(render);
          
   }
-  const saveBlob = (function() {
-      const a = document.createElement('a');
-      document.body.appendChild(a);
-      a.style.display = 'none';
-      return function saveData(blob, fileName) {
-          const url = window.URL.createObjectURL(blob);
-          a.href = url;
-          a.download = fileName;
-          a.click();
-          window.screnshotshot = false;
-      };
-  }());
 
   var screenshot =  document.getElementById("screenshot");
-  screenshot.onclick = function(event)
-  {
-      var canvas =  document.getElementById('glCanvas'),
-          glContextAttributes = { preserveDrawingBuffer: true },
-		  ctx = canvas.getContext("experimental-webgl", glContextAttributes);
+  screenshot.onclick = function(event){
+      var aCanvas = document.getElementById("glCanvas"),
+          ctx =  aCanvas.getContext("webgl2", {preserveDrawingBuffer: true});
+;
+      aCanvas.toBlob( function(blob)
+                      {
+                          var d = new Date();
+                          var fName = d.getFullYear()+"_"+d.getMonth()+"_"+d.getDate()+"_"+
+                              d.getHours()+"_"+d.getMinutes()+"_"+d.getSeconds();
 
-
-      canvas.toBlob((blob) => {
-          window.screnshotshot = true;
-          saveBlob(blob, `screencapture-${canvas.width}x${canvas.height}.png`);
-      });
+                          saveAs(blob, "bu3npattern"+fName+".png");
+                      });
 
   };
 
