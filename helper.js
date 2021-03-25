@@ -19,4 +19,24 @@ window.onclick = function(event) {
         modal.style.display = "none";
     }
 
+var screenshot =  document.getElementById("screenshot");
+screenshot.onclick = function(event){
+    var aCanvas = document.getElementById("glCanvas"),
+        ctx =  aCanvas.getContext("webgl2", {preserveDrawingBuffer: true});
+    ;
+    aCanvas.toBlob( function(blob)
+                    {
+                        var d = new Date();
+                        var fName = d.getFullYear()+"_"+d.getMonth()+"_"+d.getDate()+"_"+
+                            d.getHours()+"_"+d.getMinutes()+"_"+d.getSeconds();
+
+                        saveAs(blob, "bu3npattern"+fName+".png");
+                    });
+
+};
+
+$('#tweet').click(function(){
+    postCanvasToURL();
+});
+
 }

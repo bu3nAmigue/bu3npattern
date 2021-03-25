@@ -67,11 +67,25 @@
     </div>
   </div>
   </div>
+
   <a href="https://github.com/bu3nAmigue/bu3npattern" class="info"
-    title="View source on Github">
+    title="View source on Github" target="_blank">
     <span class="fab fa-github"></span>
     <span class="text">View source</span>
   </a>
+   <a class="info" id="tweetB" target="_blank">
+     <i class="fab fa-twitter"></i>
+    <span class="text">Share</span>
+  </a>
+    <a href='https://ko-fi.com/Q5Q62LLVG' class="info" target="_blank"
+     <span class="fab fa-gratipay"></span>
+    <span class="text">Support us </span>
+    </a>
+    </a>
+<a href="https://forms.gle/bA6HMw27b2w5LyXW8" class="info" target="_blank">
+  <i class="fas fa-comment-dots "></i>
+    <span class="text">Send feedback!</span>
+</a>
 
 <canvas id="glCanvas"  style='z-index: 1'></canvas>
 <script src="/bu3npattern/helper.js"></script>
@@ -192,22 +206,6 @@
          requestAnimationFrame(render);
          
   }
-
-  var screenshot =  document.getElementById("screenshot");
-  screenshot.onclick = function(event){
-      var aCanvas = document.getElementById("glCanvas"),
-          ctx =  aCanvas.getContext("webgl2", {preserveDrawingBuffer: true});
-;
-      aCanvas.toBlob( function(blob)
-                      {
-                          var d = new Date();
-                          var fName = d.getFullYear()+"_"+d.getMonth()+"_"+d.getDate()+"_"+
-                              d.getHours()+"_"+d.getMinutes()+"_"+d.getSeconds();
-
-                          saveAs(blob, "bu3npattern"+fName+".png");
-                      });
-
-  };
 
   fetch('data/models.json').then(r => r.json()).then(models => {
       console.log(models);
