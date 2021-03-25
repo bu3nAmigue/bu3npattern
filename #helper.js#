@@ -23,8 +23,8 @@ tweetB.onclick = function() {
 span.onclick = function() {
     modal.style.display = "none";
 }
-span2.onclick = function() {
 
+span2.onclick = function() {
     tweetM.style.display="none";
 }
 
