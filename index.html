@@ -41,7 +41,7 @@
 <script type="module" src="ca.js"></script>
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
     integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
-<link href="/bu3npattern/styles.css" rel="stylesheet">
+<link href="styles.css" rel="stylesheet">
 </head>
 <body>
    <a id="screenshot" class="info">
@@ -93,8 +93,8 @@
   </a>
 
 <canvas id="glCanvas"  style='z-index: 1'></canvas>
-<script src="/bu3npattern/helper.js"></script>
-<script src="/bu3npattern/FileSaver.js"></script>
+<script src="helper.js"></script>
+<script src="FileSaver.js"></script>
 <script type="module">
   import { CA } from "./ca.js"
 
@@ -119,13 +119,14 @@
 
   }
 
-
- 
-
   const video = document.createElement('video');
-  video.autoplay="";
-  video.style="display:none";
-  video.id="feedCam";
+ //  video.autoplay="";
+ //  video.style="display:none";
+ //  video.id="feedCam";
+
+ video.autoplay=true;
+ video.loop=true;
+ video.src="videos/sample.mov";
 
   const param = {
     active: true,
@@ -146,24 +147,24 @@
   var gui = create_gui();
   let name2idx, modelController;
 
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && video) {
-      var constraints = {audio: false, video: true};
+  // if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && video) {
+  //     var constraints = {audio: false, video: true};
 
-      navigator.mediaDevices.getUserMedia( constraints ).then( function ( stream ) {
-          video.playsInline = true;
-          video.srcObject = stream;
-          video.play();
-          videoLoaded = true;
-          ca.loadVideoTexture(video);
+  //     navigator.mediaDevices.getUserMedia( constraints ).then( function ( stream ) {
+  //         video.playsInline = true;
+  //         video.srcObject = stream;
+  //         video.play();
+  //         videoLoaded = true;
+  //         ca.loadVideoTexture(video);
 
-      } ).catch( function ( error ) {
-          console.error( 'Unable to access the camera/webcam.', error );
+  //     } ).catch( function ( error ) {
+  //         console.error( 'Unable to access the camera/webcam.', error );
 
-      } );
+  //     } );
 
-  } else {
-      console.error( 'MediaDevices interface not available.' );
-  }
+  // } else {
+  //     console.error( 'MediaDevices interface not available.' );
+  // }
 
   function update_model(models){
       ca.setWeights(models);
@@ -182,7 +183,8 @@
       modelController = gui.add(param, 'model').options(name2idx).listen();
 
       ca.paint(128, 128, 1000, param.model);
-
+      ca.loadVideoTexture(video);
+      videoLoaded= true;
 
       $( ".target" ).change(function() {
         alert( "Handler for .change() called." );
@@ -195,15 +197,15 @@
           }
 
           if (param.active) {
-            //ca.clearCircle(Math.sin(t * 2.0) * W / 3 + W / 2, Math.cos(t * 3.1) * H / 3 + H / 2, 20);
-            for (let i=0; i<param.speed; ++i) ca.step('all', param.zoom);
-          }
+             //ca.clearCircle(Math.sin(t * 2.0) * W / 3 + W / 2, Math.cos(t * 3.1) * H / 3 + H / 2, 20);
+             for (let i=0; i<param.speed; ++i) ca.step('all', param.zoom);
+           }
 
-          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-          gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+           gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+           gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
           ca.draw();
 
-          ca.paint(128, 128, 1000, param.model);
+           ca.paint(128, 128, 1000, param.model);
           requestAnimationFrame(render);
           
       }
